@@ -14,7 +14,7 @@ class VDE_Command_Help extends VDE_Command
         
         $commands = array();
         foreach ($this->cli->getCommands() as $command => $commandClass) {
-            if ($command == 'help') {
+            if ($commandClass::getVisibility() == 'private') {
                 continue;
             }
             

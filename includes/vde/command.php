@@ -22,6 +22,11 @@ abstract class VDE_Command
     static protected $description;
     
     /**
+     * @var    string        Visibility
+     */
+    static protected $visibility = 'public';
+    
+    /**
      * @var    array         Argument configuration
      */
     static protected $arguments = array();
@@ -103,6 +108,14 @@ abstract class VDE_Command
     static public function getAlias()
     {
         return static::$alias;
+    }
+    
+    /**
+     * @return    string        Visiblity (public|private)
+     */
+    static public function getVisibility()
+    {
+        return static::$visibility;
     }
     
     /**
