@@ -7,7 +7,7 @@ class VDE_Command_ProjectSync extends VDE_Command
     
     static protected $arguments = array(
         array('dir', self::ARG_PROMPT, 'Directory to sync?'),
-        array('ignoreCVS', self::ARG_OPTIONAL, 'Ignore VCS (Git, SVN) files?')
+        array('ignoreVCS', self::ARG_OPTIONAL, 'Ignore VCS (Git, SVN) files?')
     );
     
     /**
@@ -24,15 +24,24 @@ class VDE_Command_ProjectSync extends VDE_Command
      */
     public function run($watchDir, $ignoreVcs = true)
     {
+        $this->baseDir = $watchDir;
+        
         if (!is_dir($this->dir = $watchDir)) {
             throw new VDE_CLI_Exception(sprintf('"%s" does not exist', $watchDir));
         }
         
+        if ($ignoreVcs) {
+            require_once(DIR . '/includes/vde/vcs.php');
+        }
+        
         while (true) {
-            foreach ($this->getProjectFiles($watchDir) as $file) {
+            foreach ($this->getProjectFiles($watchDir, $ignoreVcs) as $file) {
                 if ($this->isModified($file)) {
                     $this->copy($file);
-                    $this->writeln(sprintf(' - "%s" has been modified!', $this->fgColor('green', $file)));
+                    $this->writeln(sprintf(
+                        ' - "%s" has been modified!', 
+                        $this->fgColor('green', str_replace($watchDir, '', $file))
+                    ));
                 }
             }
         }
@@ -43,10 +52,25 @@ class VDE_Command_ProjectSync extends VDE_Command
         ));
     }
     
-    protected function getProjectFiles($dir)
+    /**
+     * Grabs a list of all project files
+     * @param    string        Project directory
+     * @param    boolean       Ignore Vcs and other files
+     * @return   array         List of files found in project dir
+     */
+    protected function getProjectFiles($dir, $ignoreVcs)
     {
         $paths = array();
-        $iterator = new RecursiveIteratorIterator(RecursiveDirectoryIterator($dir));
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir));
+        
+        if ($ignoreVcs) {
+            $iterator = new VDE_VCSFilterIterator(
+                $iterator, 
+                array('.gitignore', '.project', '.buildpath', '.', '..'),
+                array('.git', '.settings')
+            );
+        }
+        
         foreach ($iterator as $path => $info) {
             $paths[] = $path;
         }
@@ -65,7 +89,7 @@ class VDE_Command_ProjectSync extends VDE_Command
         if (!file_exists(DIR . $relativePath)) {
             return true;
         }
-        return md5_file($file) !== md5(DIR . $relativePath);
+        return md5_file($file) !== md5_file(DIR . $relativePath);
     }
     
     /**
