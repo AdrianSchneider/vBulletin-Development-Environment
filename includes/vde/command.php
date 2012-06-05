@@ -138,7 +138,7 @@ abstract class VDE_Command
         }
         
         return $argv;
-    }        
+    }
     
     /**
      * Writes output
@@ -166,6 +166,10 @@ abstract class VDE_Command
      */
     public function fgColor($color, $text)
     {
+        if (DIRECTORY_SEPARATOR == '\\') {
+            return $text;
+        }
+        
         if (!isset(self::$fgColors[$color])) {
             throw new Exception(sprintf('"%s" is not a valid fg color', $color));
         }
@@ -182,6 +186,10 @@ abstract class VDE_Command
      */
     public function bgColor($color, $text)
     {
+        if (DIRECTORY_SEPARATOR == '\\') {
+            return $text;
+        }
+
         if (!isset(self::$bgColors[$color])) {
             throw new Exception(sprintf('"%s" is not a valid bg color', $color));
         }
